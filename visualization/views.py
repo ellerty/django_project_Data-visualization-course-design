@@ -1,14 +1,10 @@
-# visualization/views.py
-
-import pandas as pd
-import os
 import json
 from django.shortcuts import render
 from collections import defaultdict
 from django.conf import settings
+from .models import RichPerson
 
 def map_view(request):
-    csv_file_path = os.path.join(settings.BASE_DIR, 'top rich2024.csv')
     country_counts = defaultdict(int)
 
     # 下面是check.py中生成的缺失的国家名
@@ -22,37 +18,26 @@ def map_view(request):
         "Korea, Republic of": "Korea"
     }
 
-
     try:
-        # 使用 pandas 读取 CSV 文件，指定分隔符为逗号
-        df = pd.read_csv(csv_file_path, delimiter=',', encoding='utf-8')
+        # 从数据库中获取所有国家/地区
+        countries = RichPerson.objects.values_list('country_region', flat=True)
 
-        # 检查是否存在 'Country / Region' 列
-        if 'Country / Region' in df.columns:
-            countries = df['Country / Region'].dropna().str.strip()
-        else:
-            print("Available columns:", df.columns)
-            countries = pd.Series([])
+        # 去除空值并去除首尾空白
+        countries = [country.strip() for country in countries if country]
 
         # 应用国家名称映射
-        mapped_countries = countries.apply(lambda x: country_mapping.get(x, x))
-
-        # 找出未映射的国家名称（用于调试）
-        unmapped_countries = set(countries.unique()) - set(country_mapping.keys())
-        print("Unmapped countries in data:", unmapped_countries)
+        mapped_countries = [country_mapping.get(country, country) for country in countries]
 
         # 统计每个国家的富豪数量
-        country_counts = mapped_countries.value_counts().to_dict()
+        for country in mapped_countries:
+            country_counts[country] += 1
 
         # 确保 'Hong Kong (China)' 存在于统计中
         if 'Hong Kong (China)' not in country_counts:
             country_counts['Hong Kong (China)'] = 0
 
-    except FileNotFoundError:
-        print(f"File not found: {csv_file_path}")
-        country_counts = {}
     except Exception as e:
-        print("Error reading CSV with pandas:", e)
+        print("Error reading from the database:", e)
         country_counts = {}
 
     # 准备 ECharts 所需的数据格式
