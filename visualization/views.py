@@ -1,13 +1,16 @@
 import json
 from django.shortcuts import render
 from collections import defaultdict
-from django.conf import settings
 from .models import RichPerson
 
-def map_view(request):
+def home_view(request):
+    """
+    从数据库中读取国家/地区的富豪数量数据，并准备可视化地图所需的格式。
+    """
+    # 初始化国家计数字典
     country_counts = defaultdict(int)
 
-    # 下面是check.py中生成的缺失的国家名
+    # 国家名称映射（根据 check.py 中定义的映射）
     country_mapping = {
         "Hong Kong": "China",
         "Russian Federation": "Russia",
@@ -19,25 +22,22 @@ def map_view(request):
     }
 
     try:
-        # 从数据库中获取所有国家/地区
+        # 从数据库中获取所有国家/地区字段
         countries = RichPerson.objects.values_list('country_region', flat=True)
 
         # 去除空值并去除首尾空白
         countries = [country.strip() for country in countries if country]
 
-        # 应用国家名称映射
+        # 应用国家名称映射规则
         mapped_countries = [country_mapping.get(country, country) for country in countries]
 
         # 统计每个国家的富豪数量
         for country in mapped_countries:
             country_counts[country] += 1
 
-        # 确保 'Hong Kong (China)' 存在于统计中
-        if 'Hong Kong (China)' not in country_counts:
-            country_counts['Hong Kong (China)'] = 0
-
     except Exception as e:
-        print("Error reading from the database:", e)
+        # 记录错误日志，返回空数据
+        print(f"Error reading from the database: {e}")
         country_counts = {}
 
     # 准备 ECharts 所需的数据格式
@@ -54,7 +54,8 @@ def map_view(request):
         else:
             data.append({'name': country, 'value': count})
 
-    # 序列化为 JSON
+    # 将数据序列化为 JSON 格式
     data_json = json.dumps(data, ensure_ascii=False)
 
-    return render(request, 'map.html', {'data': data_json})
+    # 渲染 home.html 模板
+    return render(request, 'home.html', {'data': data_json})
