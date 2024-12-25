@@ -59,3 +59,13 @@ def home_view(request):
 
     # 渲染 home.html 模板
     return render(request, 'home.html', {'data': data_json})
+
+
+def data_analysis_view(request):
+    # 数据分析页面的视图逻辑
+    analysis_data = {
+        'total_rich': 5000,
+        'average_wealth': 1000000,
+        # 其他分析数据...
+    }
+    return render(request, 'data_analysis.html', {'analysis_data': analysis_data})

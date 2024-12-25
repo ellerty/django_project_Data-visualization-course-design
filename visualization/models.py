@@ -9,5 +9,9 @@ class RichPerson(models.Model):
     country_region = models.CharField(max_length=100)
     industry = models.CharField(max_length=100)
 
+    # 新增字段
+    extract = models.TextField(null=True, blank=True)
+    image_url = models.URLField(null=True, blank=True)
+    titles = models.JSONField(null=True, blank=True)  # 使用 JSONField 存储列表
     def __str__(self):
         return f"{self.rank}. {self.name}"

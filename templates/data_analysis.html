@@ -1,0 +1,22 @@
+<!-- templates/data_analysis.html -->
+
+{% extends 'base.html' %}
+
+{% block title %}数据分析 - 富豪地图{% endblock %}
+
+{% block content %}
+<div class="container-xxl py-5">
+    <div class="container">
+        <h1 style="text-align: center; margin-bottom: 30px;">富豪地图数据分析</h1>
+        <div class="row">
+            <div class="col-md-6">
+                <h3>总富豪数量: {{ analysis_data.total_rich }}</h3>
+            </div>
+            <div class="col-md-6">
+                <h3>平均财富: {{ analysis_data.average_wealth }}</h3>
+            </div>
+            <!-- 您可以在这里添加更多的数据分析内容，例如图表、表格等 -->
+        </div>
+    </div>
+</div>
+{% endblock %}
