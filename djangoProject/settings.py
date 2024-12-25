@@ -131,3 +131,6 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 CSP_DEFAULT_SRC = ["'self'"]
 CSP_SCRIPT_SRC = ["'self'", "'unsafe-eval'"]
+
+# settings.py
+AI_API_KEY = 'sk-QOeZsfHlhOLspxapZPco8Tiz7JoOvIHpLX0KdfpoExs5K2Yb'

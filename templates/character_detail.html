@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}人物详情 - {{ person.name }}{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <h1 class="mb-4">{{ person.name }} 的详情</h1>
+    <div class="row">
+        <div class="col-md-4">
+            {% if person.image_url %}
+                <img src="{{ person.image_url }}" alt="{{ person.name }}" class="img-fluid rounded mx-auto d-block" style="max-width: 300px;">
+            {% else %}
+                <img src="https://via.placeholder.com/300" alt="Placeholder" class="img-fluid rounded mx-auto d-block">
+            {% endif %}
+        </div>
+        <div class="col-md-8">
+            <p><strong>排名：</strong> {{ person.rank }}</p>
+            <p><strong>总财富：</strong> {{ person.total_net_worth }}</p>
+            <p><strong>国家/地区：</strong> {{ person.country_region }}</p>
+            <p><strong>行业：</strong> {{ person.industry }}</p>
+            <!-- 显示其他字段 -->
+            {% if person.extract %}
+                <p><strong>简介：</strong> {{ person.extract }}</p>
+            {% endif %}
+            <h3>AI 概括</h3>
+            <div id="ai-summary" class="border p-3"></div>
+        </div>
+    </div>
+</div>
+
+<!-- 嵌入序列化的 JSON 数据 -->
+<script>
+    // 使用 Django 传递的序列化 JSON 数据
+    const personData = JSON.parse('{{ person_data|safe }}');
+    console.log(personData);
+
+    // 示例：动态生成 AI 概括内容
+    document.addEventListener('DOMContentLoaded', function() {
+        const summaryDiv = document.getElementById('ai-summary');
+        summaryDiv.innerHTML = `
+            <p><strong>${personData.name}</strong> 是来自 ${personData.country_region} 的一位重要人物，
+            目前在财富排行榜上排名第 ${personData.rank}，其总财富为 ${personData.total_net_worth}。
+            行业领域为 ${personData.industry}。</p>
+        `;
+    });
+</script>
+
+<!-- 如果需要动态加载 AI 概括 -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    $(document).ready(function() {
+        const personId = personData.id;
+        $.ajax({
+            url: `/character/${personId}/ai_summary/`,
+            type: 'GET',
+            success: function(data) {
+                $('#ai-summary').html(data.summary);
+            },
+            error: function(xhr, status, error) {
+                $('#ai-summary').html('<p>无法加载 AI 概括内容。</p>');
+            }
+        });
+    });
+</script>
+{% endblock %}

@@ -159,3 +159,75 @@ def industry_proportion(request):
     industries = RichPerson.objects.values('industry').annotate(count=Count('id')).order_by('-count')
     data = list(industries)
     return Response(data)
+
+
+def character_analysis_view(request):
+    query = request.GET.get('q', '')
+    results = []
+    if query:
+        results = RichPerson.objects.filter(name__icontains=query)
+    context = {
+        'query': query,
+        'results': results,
+    }
+    return render(request, 'character_analysis.html', context)
+
+import json
+import requests
+from django.shortcuts import get_object_or_404
+from django.http import JsonResponse
+from .models import RichPerson
+from django.conf import settings
+def get_ai_summary(request, pk):
+    if request.method == 'GET':
+        person = get_object_or_404(RichPerson, pk=pk)
+        api_url = 'https://gpt.soruxgpt.com/api/api/v1/chat/completions'
+        headers = {
+            'Content-Type': 'application/json',
+            'Authorization': f'Bearer {settings.AI_API_KEY}'
+        }
+        user_message = (
+            f"请概括以下人物的信息：\n"
+            f"姓名: {person.name}\n"
+            f"排名: {person.rank}\n"
+            f"总财富: {person.total_net_worth}\n"
+            f"国家/地区: {person.country_region}\n"
+            f"行业: {person.industry}\n"
+            f"简介: {person.extract}"
+        )
+        messages = [
+            {'role': 'system', 'content': 'You are a helpful assistant.'},
+            {'role': 'user', 'content': user_message}
+        ]
+        data = {
+            'model': 'gpt-3.5-turbo',
+            'messages': messages,
+            'stream': False
+        }
+        response = requests.post(api_url, headers=headers, data=json.dumps(data))
+        if response.status_code == 200:
+            summary = response.json()['choices'][0]['message']['content']
+            return JsonResponse({'summary': summary})
+        else:
+            return JsonResponse({'error': 'Failed to get summary from AI API.'}, status=500)
+    else:
+        return JsonResponse({'error': 'Invalid request method.'}, status=405)
+
+def character_detail_view(request, pk):
+    # 获取单个人物对象
+    person = get_object_or_404(RichPerson, pk=pk)
+
+    # 将人物数据序列化为 JSON 格式
+    person_data = json.dumps({
+        'id': person.id,
+        'name': person.name,
+        'rank': person.rank,
+        'total_net_worth': person.total_net_worth,
+        'country_region': person.country_region,
+        'industry': person.industry,
+        'image_url': person.image_url or '',
+        'extract': person.extract or '',
+    })
+
+    # 将人物对象和 JSON 数据传递到模板
+    return render(request, 'character_detail.html', {'person': person, 'person_data': person_data})

@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+
+{% block title %}人物分析{% endblock %}
+
+{% block extra_head %}
+<!-- Additional CSS for person cards -->
+<style>
+    .person-card {
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        transition: transform 0.2s;
+    }
+    .person-card:hover {
+        transform: scale(1.02);
+    }
+    .person-image {
+        max-width: 150px;
+        max-height: 150px;
+        border-radius: 50%;
+        object-fit: cover;
+        margin-bottom: 15px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <h1 class="mb-4">人物分析</h1>
+    <form method="get" class="mb-5">
+        <div class="input-group">
+            <input type="text" name="q" class="form-control" placeholder="搜索人物名称..." value="{{ query }}">
+            <button class="btn btn-primary" type="submit">搜索</button>
+        </div>
+    </form>
+
+    {% if results %}
+        <div class="row">
+            {% for person in results %}
+                <div class="col-md-4">
+                    <a href="{% url 'character_detail' person.id %}" class="text-decoration-none">
+                        <div class="person-card">
+                            {% if person.image_url %}
+                                <img src="{{ person.image_url }}" alt="{{ person.name }}" class="person-image mx-auto d-block">
+                            {% else %}
+                                <img src="https://www.bing.com/images/search?view=detailV2&ccid=fUpweepH&id=1F4AF08A96AB30BF6FF04B370990FDEE5E2552EF&thid=OIP.fUpweepHaSHyh9KOBQAeyAAAAA&mediaurl=https%3a%2f%2fbpic.588ku.com%2felement_origin_min_pic%2f21%2f08%2f13%2f195ce823ad18b19c90a38eddb471e543.jpg&cdnurl=https%3a%2f%2fth.bing.com%2fth%2fid%2fR.7d4a7079ea476921f287d28e05001ec8%3frik%3d71IlXu79kAk3Sw%26pid%3dImgRaw%26r%3d0&exph=474&expw=474&q=%e7%81%b0%e8%89%b2%e5%a4%b4%e5%83%8f&simid=608053712356928203&FORM=IRPRST&ck=16DA033B4B9E1068495F8BE1655AEE5C&selectedIndex=0&itb=0">
+                            {% endif %}
+                            <h4 class="text-center">{{ person.name }}</h4>
+                            <p><strong>排名：</strong> {{ person.rank }}</p>
+                            <p><strong>总财富：</strong> {{ person.total_net_worth }}</p>
+                            <p><strong>国家/地区：</strong> {{ person.country_region }}</p>
+                            <p><strong>行业：</strong> {{ person.industry }}</p>
+                            {% if person.extract %}
+                                <p>{{ person.extract|truncatewords:20 }}</p>
+                            {% endif %}
+                        </div>
+                    </a>
+                </div>
+            {% endfor %}
+        </div>
+    {% elif query %}
+        <p>没有找到与 "{{ query }}" 相关的人物。</p>
+    {% else %}
+        <p>请输入关键词搜索人物。</p>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<!-- Additional JavaScript can be placed here if needed -->
+{% endblock %}

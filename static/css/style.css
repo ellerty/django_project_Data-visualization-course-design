@@ -16,3 +16,18 @@ h1, h3 {
 body {
     font-family: 'Arial', sans-serif;
 }
+
+
+
+/* Spinner 样式 */
+#spinner {
+    display: flex; /* 默认显示加载动画 */
+    /* 其他样式保持不变 */
+}
+
+#spinner.show {
+    display: flex; /* 当需要显示时，设置为 flex */
+}
+#spinner.hidden {
+    display: none !important; /* 隐藏时 */
+}
