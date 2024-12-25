@@ -1,3 +1,5 @@
+/* static/css/data_analysis.css */
+
 .container-xxl {
     background-color: #f2f2f2;
 }
@@ -8,7 +10,6 @@ h1, h3 {
 
 #growth-chart, #wealth-chart, #industry-chart {
     margin-bottom: 50px;
-    /* 移除固定宽高，确保响应式 */
     width: 100% !important;
     height: 100% !important;
 }

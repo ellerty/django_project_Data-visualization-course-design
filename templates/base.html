@@ -44,7 +44,7 @@
     <a href="{% url 'home_view' %}" class="navbar-brand d-flex align-items-center">
         <h2 class="m-0 text-primary">
             <img class="img-fluid me-2" src="{% static 'img/icon-1.png' %}" alt="" style="width: 45px;">
-            富豪地图
+            BUSINESS
         </h2>
     </a>
     <button type="button" class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#navbarCollapse">
@@ -76,7 +76,7 @@
                 <div class="col-md-6">
                     <h1 class="text-primary mb-4">
                         <img class="img-fluid me-2" src="{% static 'img/icon-1.png' %}" alt="" style="width: 45px;">
-                        富豪地图
+                        BUSINESS
                     </h1>
                     <span>全球富豪数量分布的可视化展示。</span>
                 </div>
@@ -86,7 +86,7 @@
             <div class="container">
                 <div class="row">
                     <div class="col-md-6 text-center text-md-start mb-3 mb-md-0">
-                        &copy; <a href="#">富豪地图</a>, 版权所有.
+                        &copy; <a href="#">BUSINESS MAP</a>, 版权所有.
                     </div>
                 </div>
             </div>
@@ -107,7 +107,8 @@
     <script src="{% static 'lib/waypoints/waypoints.min.js' %}"></script>
     <script src="{% static 'lib/owlcarousel/owl.carousel.min.js' %}"></script>
     <script src="{% static 'lib/counterup/counterup.min.js' %}"></script>
-
+    <!-- 在<head>部分添加Chart.js的CDN链接 -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- Template Javascript -->
     <script src="{% static 'js/main.js' %}"></script>
 
