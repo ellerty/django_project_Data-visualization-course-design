@@ -43,6 +43,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -133,4 +134,39 @@ CSP_DEFAULT_SRC = ["'self'"]
 CSP_SCRIPT_SRC = ["'self'", "'unsafe-eval'"]
 
 # settings.py
-AI_API_KEY = 'sk-QOeZsfHlhOLspxapZPco8Tiz7JoOvIHpLX0KdfpoExs5K2Yb'
+
+AI_API_KEY = os.getenv('AI_API_KEY', 'sk-QOeZsfHlhOLspxapZPco8Tiz7JoOvIHpLX0KdfpoExs5K2Yb')  # 请确保在生产环境中设置环境变量
+# djangoProject/settings.py
+
+ASGI_APPLICATION = 'djangoProject.asgi.application'
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'file': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': os.path.join(BASE_DIR, 'debug.log'),
+            'formatter': 'verbose',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['file'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        'visualization': {  # 你的应用名
+            'handlers': ['file'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+    },
+}

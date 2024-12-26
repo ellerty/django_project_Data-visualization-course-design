@@ -24,43 +24,70 @@
                 <p><strong>简介：</strong> {{ person.extract }}</p>
             {% endif %}
             <h3>AI 概括</h3>
-            <div id="ai-summary" class="border p-3"></div>
+            <div id="ai-summary" class="border p-3">
+                <p id="ai-status">正在获取 AI 分析...</p>
+                <p id="ai-content"></p>
+            </div>
+            <button id="get-ai-summary-btn" class="btn btn-primary mt-3">获取 AI 分析</button>
         </div>
     </div>
 </div>
 
-<!-- 嵌入序列化的 JSON 数据 -->
+<!-- 使用 Fetch API 获取 AI 分析 -->
 <script>
-    // 使用 Django 传递的序列化 JSON 数据
-    const personData = JSON.parse('{{ person_data|safe }}');
-    console.log(personData);
-
-    // 示例：动态生成 AI 概括内容
     document.addEventListener('DOMContentLoaded', function() {
-        const summaryDiv = document.getElementById('ai-summary');
-        summaryDiv.innerHTML = `
-            <p><strong>${personData.name}</strong> 是来自 ${personData.country_region} 的一位重要人物，
-            目前在财富排行榜上排名第 ${personData.rank}，其总财富为 ${personData.total_net_worth}。
-            行业领域为 ${personData.industry}。</p>
-        `;
-    });
-</script>
+        const getAiSummaryBtn = document.getElementById('get-ai-summary-btn');
+        const aiStatus = document.getElementById('ai-status');
+        const aiContent = document.getElementById('ai-content');
 
-<!-- 如果需要动态加载 AI 概括 -->
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script>
-    $(document).ready(function() {
-        const personId = personData.id;
-        $.ajax({
-            url: `/character/${personId}/ai_summary/`,
-            type: 'GET',
-            success: function(data) {
-                $('#ai-summary').html(data.summary);
-            },
-            error: function(xhr, status, error) {
-                $('#ai-summary').html('<p>无法加载 AI 概括内容。</p>');
+        getAiSummaryBtn.addEventListener('click', async function() {
+            aiStatus.textContent = '正在获取 AI 分析...';
+            aiContent.textContent = '';
+
+            try {
+                const response = await fetch(`/character_analysis/{{ person.id }}/get-ai-summary/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')  // 确保 CSRF 令牌正确传递
+                    },
+                    body: JSON.stringify({})  // 如果需要，可以传递额外的数据
+                });
+
+                if (!response.ok) {
+                    throw new Error(`API请求失败，状态码：${response.status}`);
+                }
+
+                const data = await response.json();
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+
+                aiStatus.textContent = 'AI 分析完成。';
+                aiContent.innerHTML = `<strong>AI助手：</strong> ${marked.parse(data.ai_summary)}`;
+            } catch (error) {
+                console.error('调用AI API时出错:', error);
+                aiStatus.textContent = '无法获取 AI 概括内容。';
+                aiContent.innerHTML += `<span style="color: red;">抱歉，无法获取AI助手的回复。</span>`;
             }
         });
+
+        // 获取 CSRF 令牌的辅助函数
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    // Does this cookie string begin with the name we want?
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
     });
 </script>
 {% endblock %}

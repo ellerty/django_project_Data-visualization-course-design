@@ -173,45 +173,139 @@ def character_analysis_view(request):
     return render(request, 'character_analysis.html', context)
 
 import json
-import requests
+import httpx
+import logging
 from django.shortcuts import get_object_or_404
-from django.http import JsonResponse
+from django.http import StreamingHttpResponse, JsonResponse
 from .models import RichPerson
 from django.conf import settings
-def get_ai_summary(request, pk):
-    if request.method == 'GET':
-        person = get_object_or_404(RichPerson, pk=pk)
-        api_url = 'https://gpt.soruxgpt.com/api/api/v1/chat/completions'
-        headers = {
-            'Content-Type': 'application/json',
-            'Authorization': f'Bearer {settings.AI_API_KEY}'
-        }
-        user_message = (
-            f"请概括以下人物的信息：\n"
-            f"姓名: {person.name}\n"
-            f"排名: {person.rank}\n"
-            f"总财富: {person.total_net_worth}\n"
-            f"国家/地区: {person.country_region}\n"
-            f"行业: {person.industry}\n"
-            f"简介: {person.extract}"
-        )
-        messages = [
-            {'role': 'system', 'content': 'You are a helpful assistant.'},
-            {'role': 'user', 'content': user_message}
-        ]
-        data = {
-            'model': 'gpt-3.5-turbo',
-            'messages': messages,
-            'stream': False
-        }
-        response = requests.post(api_url, headers=headers, data=json.dumps(data))
-        if response.status_code == 200:
-            summary = response.json()['choices'][0]['message']['content']
-            return JsonResponse({'summary': summary})
-        else:
-            return JsonResponse({'error': 'Failed to get summary from AI API.'}, status=500)
-    else:
+import asyncio
+
+logger = logging.getLogger('visualization')  # 使用你的应用名
+
+async def get_ai_summary_stream(request, pk):
+    if request.method != 'GET':
+        logger.warning(f"Invalid request method: {request.method} for pk={pk}")
         return JsonResponse({'error': 'Invalid request method.'}, status=405)
+
+    person = get_object_or_404(RichPerson, pk=pk)
+    logger.debug(f"Fetching AI summary for person: {person.name} (pk={pk})")
+
+    # 替换为你的中转 API 平台的 OpenAI API 地址
+    api_url = 'https://your-relay-api-platform.com/api/v1/chat/completions'
+    headers = {
+        'Content-Type': 'application/json',
+        'Authorization': f'Bearer {settings.AI_API_KEY}'
+    }
+    user_message = (
+        f"请概括以下人物的信息：\n"
+        f"姓名: {person.name}\n"
+        f"排名: {person.rank}\n"
+        f"总财富: {person.total_net_worth}\n"
+        f"国家/地区: {person.country_region}\n"
+        f"行业: {person.industry}\n"
+        f"简介: {person.extract}"
+    )
+    messages = [
+        {'role': 'system', 'content': 'You are a helpful assistant.'},
+        {'role': 'user', 'content': user_message}
+    ]
+    data = {
+        'model': 'gpt-3.5-turbo',
+        'messages': messages,
+        'stream': True  # 启用流式响应
+    }
+
+    try:
+        async with httpx.AsyncClient(timeout=None) as client:
+            logger.debug(f"Sending POST request to AI API at {api_url}")
+            response = await client.post(api_url, headers=headers, json=data)
+            response.raise_for_status()
+            logger.debug(f"Received response status: {response.status_code}")
+
+            async def stream():
+                async for chunk in response.aiter_text():
+                    if chunk:
+                        # 假设中转 API 的流式响应格式与 OpenAI 相同
+                        if chunk.startswith('data: '):
+                            data_str = chunk.replace('data: ', '').strip()
+                            if data_str == '[DONE]':
+                                logger.debug("Received [DONE] signal from AI API")
+                                break
+                            try:
+                                data_json = json.loads(data_str)
+                                text = data_json['choices'][0]['delta'].get('content', '')
+                                if text:
+                                    logger.debug(f"Streaming text chunk: {text}")
+                                    yield text
+                            except json.JSONDecodeError as e:
+                                logger.error(f"JSON decode error: {e} - Chunk: {data_str}")
+                                continue
+
+            return StreamingHttpResponse(stream(), content_type='text/plain')
+    except httpx.HTTPError as e:
+        logger.error(f"HTTPError when fetching AI summary: {e}")
+        return JsonResponse({'error': 'Failed to get summary from AI API.'}, status=500)
+    except Exception as e:
+        logger.error(f"Unexpected error: {e}")
+        return JsonResponse({'error': 'An unexpected error occurred.'}, status=500)
+
+from django.views.decorators.csrf import csrf_exempt
+@csrf_exempt  # 如果使用 AJAX POST 请求，确保 CSRF 令牌正确传递，或根据需要禁用
+def get_ai_summary(request, pk):
+    if request.method != 'POST':
+        logger.warning(f"Invalid request method: {request.method} for pk={pk}")
+        return JsonResponse({'error': 'Invalid request method.'}, status=405)
+
+    person = get_object_or_404(RichPerson, pk=pk)
+    logger.debug(f"Fetching AI summary for person: {person.name} (pk={pk})")
+
+    api_url = 'https://gpt.soruxgpt.com/api/api/v1/chat/completions'
+    headers = {
+        'Content-Type': 'application/json',
+        'Authorization': f'Bearer {settings.AI_API_KEY}'  # 从 settings.py 中获取
+    }
+    user_message = (
+        f"请概括以下人物的信息：\n"
+        f"姓名: {person.name}\n"
+        f"排名: {person.rank}\n"
+        f"总财富: {person.total_net_worth}\n"
+        f"国家/地区: {person.country_region}\n"
+        f"行业: {person.industry}\n"
+        f"简介: {person.extract}"
+    )
+    messages = [
+        {'role': 'system', 'content': 'You are a helpful assistant.'},
+        {'role': 'user', 'content': user_message}
+    ]
+    data = {
+        'model': 'gpt-3.5-turbo',
+        'messages': messages,
+        'stream': False  # 关闭流式响应
+    }
+
+    try:
+        with httpx.Client(timeout=60) as client:
+            logger.debug(f"Sending POST request to AI API at {api_url}")
+            response = client.post(api_url, headers=headers, json=data)
+            response.raise_for_status()
+            logger.debug(f"Received response status: {response.status_code}")
+
+            response_data = response.json()
+            logger.debug(f"AI API response: {response_data}")
+
+            # 解析 AI API 返回的内容
+            ai_text = ""
+            for choice in response_data.get('choices', []):
+                ai_text += choice.get('message', {}).get('content', '')
+
+            return JsonResponse({'ai_summary': ai_text})
+    except httpx.HTTPError as e:
+        logger.error(f"HTTPError when fetching AI summary: {e}")
+        return JsonResponse({'error': 'Failed to get summary from AI API.'}, status=500)
+    except Exception as e:
+        logger.error(f"Unexpected error: {e}")
+        return JsonResponse({'error': 'An unexpected error occurred.'}, status=500)
 
 def character_detail_view(request, pk):
     # 获取单个人物对象
