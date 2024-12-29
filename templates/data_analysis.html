@@ -8,14 +8,17 @@
     <div class="container">
         <h1 style="text-align: center; margin-bottom: 30px;">富豪地图数据分析</h1>
         <div class="row">
-            <div class="col-md-12" style="height: 400px; position: relative;">
-                <canvas id="growth-chart"></canvas>
+            <!-- 财富增长图表容器 -->
+            <div class="col-md-12" style="height: 400px; position: relative; margin-bottom: 50px;">
+                <div id="growth-chart" style="width: 100%; height: 100%;"></div>
             </div>
-            <div class="col-md-12" style="height: 400px; position: relative;">
-                <canvas id="wealth-chart"></canvas>
+            <!-- 总财富图表容器 -->
+            <div class="col-md-12" style="height: 400px; position: relative; margin-bottom: 50px;">
+                <div id="wealth-chart" style="width: 100%; height: 100%;"></div>
             </div>
-            <div class="col-md-12" style="height: 400px; position: relative;">
-                <canvas id="industry-chart"></canvas>
+            <!-- 行业占比图表容器 -->
+            <div class="col-md-12" style="height: 400px; position: relative; margin-bottom: 50px;">
+                <div id="industry-chart" style="width: 100%; height: 100%;"></div>
             </div>
         </div>
     </div>
@@ -23,5 +26,8 @@
 {% endblock %}
 
 {% block extra_scripts %}
-<script src="{% static 'js/data_analysis.js' %}"></script>
+    <!-- 引入 ECharts 库 -->
+    <script src="https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js"></script>
+    <!-- 引入修改后的数据分析脚本 -->
+    <script src="{% static 'js/data_analysis.js' %}"></script>
 {% endblock %}
